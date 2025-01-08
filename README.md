@@ -1,41 +1,41 @@
 ### Full and extensive analysis can be found in the file eda.py.
 
-I. PLANNING
-    I.1 Introduction
-    I.2 Dataset description
-    I.3 Project assumptions
-        I.3.1 Defining the problem
-        I.3.2 Assessing the scope
-        I.3.3 Success metric
-        I.3.4 Feasibility of the ML application
-II.DATA COLLECTION AND PREPARATION
-    II.1 Import libraries and data files
-    II.2 Exploratory data analysis (EDA)
-        II.2.1 Reading data & target C=class distribution
-        II.2.2 Statistical summary
-        II.2.3 Correlation Matrics
-        II.2.4 Missing values, categorical data transformation
-        II.2.5 Distribution of attributes with fewer than 10 unique values
-        II.2.6 Distribution of numerical features
-        II.2.7 Distribution of categorical features
-        II.2.8 Distribution of target class in season
-        II.2.9 Correlations between Numerical Features
-III DATA PRE-PROCESSING
-    III.1 Target encoding
-    III.2 Filling nulls
-    III.3 Removing duplicates and unnecessary columns
-    III.4 Filling nulls
-    III.5 Filling nulls
-    III.6 Convert types (downcasting)
-IV DATA PROCESSING
-    IV.1 Skewness of distributions
-    IV.2 Detect outlier
-    IV.3 Categorical data transformation
-    IV.4 Normalizing
-    IV.5 TSN
-    IV.6 PCA
-    IV.7 Feature selection
-    IV.8 Imbalanced target - oversampling by SMOTEE
+* I. PLANNING
+    * I.1 Introduction
+    * I.2 Dataset description
+    * I.3 Project assumptions
+        * I.3.1 Defining the problem
+        * I.3.2 Assessing the scope
+        * I.3.3 Success metric
+        * I.3.4 Feasibility of the ML application
+* II.DATA COLLECTION AND PREPARATION
+    * II.1 Import libraries and data files
+    * II.2 Exploratory data analysis (EDA)
+        * II.2.1 Reading data & target C=class distribution
+        * II.2.2 Statistical summary
+        * II.2.3 Correlation Matrics
+        * II.2.4 Missing values, categorical data transformation
+        * II.2.5 Distribution of attributes with fewer than 10 unique values
+        * II.2.6 Distribution of numerical features
+        * II.2.7 Distribution of categorical features
+        * II.2.8 Distribution of target class in season
+        * II.2.9 Correlations between Numerical Features
+* III DATA PRE-PROCESSING
+    * III.1 Target encoding
+    * III.2 Filling nulls
+    * III.3 Removing duplicates and unnecessary columns
+    * III.4 Filling nulls
+    * III.5 Filling nulls
+    * III.6 Convert types (downcasting)
+* IV DATA PROCESSING
+    * IV.1 Skewness of distributions
+    * IV.2 Detect outlier
+    * IV.3 Categorical data transformation
+    * IV.4 Normalizing
+    * IV.5 TSN
+    * IV.6 PCA
+    * IV.7 Feature selection
+    * IV.8 Imbalanced target - oversampling by SMOTEE
    
    
 I.1 Introduction
