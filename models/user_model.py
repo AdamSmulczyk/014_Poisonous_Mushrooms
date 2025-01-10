@@ -2,9 +2,13 @@
 # coding: utf-8
 
 # In[ ]:
-
+from dotenv import load_dotenv
 import pandas as pd
 import numpy as np
+import os
+from datetime import datetime
+import base64
+import requests
 from scipy.stats import boxcox, stats
 from sklearn.impute import SimpleImputer, KNNImputer
 from sklearn.preprocessing import FunctionTransformer, PowerTransformer, MinMaxScaler, StandardScaler, LabelEncoder, OneHotEncoder, OrdinalEncoder 
@@ -117,6 +121,8 @@ class Workflow_6:
         - Splits the data.
         - Trains the model.
         - Evaluates the model.
+        - Save results to file.
+        - Upload results to github repository.
         """
         X_train, X_test, y_train, y_test = self.split_data(X, y, test_size, random_state)
 
@@ -127,13 +133,39 @@ class Workflow_6:
 
         model.train(X_train, y_train)
         
-        results = self.evaluate_model(model, X_train, X_test, y_train, y_test, scoring)
+ 
+        load_dotenv()
+        github_token = os.getenv("GITHUB_TOKEN")
+        print(f"Loaded token: {github_token}")
+        github_token = os.getenv("GITHUB_TOKEN")
+        if not github_token:
+            raise ValueError("GITHUB_TOKEN is not set. Please configure it in your environment.")            
+        github_repo_url = "https://github.com/AdamSmulczyk/014_Poisonous_Mushrooms/tree/performance_reports"
         
+        
+        # evaluate_model
+        results = self.evaluate_model(model, X_train, X_test, y_train, y_test, scoring)  
         print("Model Evaluation Results:")
-        print(results.to_string())     
+        print(results.to_string())
+        self.save_results_to_file(results,
+                                  save_dir=r"C:\Users\adams\OneDrive\Dokumenty\Python",
+                                  prefix="mushroom_evaluate",
+                                  file_type="csv",
+                                  github_token=github_token, 
+                                  github_repo_url=github_repo_url
+                                 )
         
+        # evaluate_plots
         plot = self.evaluate_plots(model, X_test, y_test, model_name)
+        self.save_results_to_file(plot, 
+                                  save_dir=r"C:\Users\adams\OneDrive\Dokumenty\Python", 
+                                  prefix="mushroom_plot", 
+                                  file_type="png",
+                                  github_token=github_token, 
+                                  github_repo_url=github_repo_url
+                                 )       
 
+       
     def split_data(self, 
                    X: pd.DataFrame, 
                    y: pd.Series, 
@@ -143,6 +175,7 @@ class Workflow_6:
         """Split the data into train and test sets."""
         return train_test_split(X, y, test_size=test_size, random_state=random_state)
 
+    
     def evaluate_model(self, 
                        model: Model, 
                        X_train: pd.DataFrame, 
@@ -176,14 +209,14 @@ class Workflow_6:
         
             return pd.Series({
                 'F1_score': round(f1_score(y_true, y_pred_class), 4),
-                'P-R_score': round(average_precision_score(y_true, y_pred_class), 4), #Precision-Recall
-                'Matthews': round(matthews_corrcoef(y_true, y_pred_class), 4),  #the Matthews correlation coefficient (MCC)
+                'P-R_score': round(average_precision_score(y_true, y_pred_class), 4),
+                'Matthews': round(matthews_corrcoef(y_true, y_pred_class), 4), 
                 'Accuracy': round(accuracy_score(y_true, y_pred_class), 4),
                 'Recall': round(recall_score(y_true, y_pred_class), 4),
                 'Precision': round(precision_score(y_true, y_pred_class), 4), 
-                'SKF': np.mean(n_scores),                                        #Stratified K-Fold
-                'AUC': roc_auc_score(y_true, y_pred_class),                      #the Area Under the Curve
-                'Min_cutoff': cutoff,
+                'SKF': round(np.mean(n_scores), 4),                       
+                'AUC': round(roc_auc_score(y_true, y_pred_class), 4), 
+                'Min_cutoff': round(cutoff, 4),
             })
         
         train_metrics = compute_metrics(y_train, model.predict_proba(X_train)[:, 1])
@@ -191,11 +224,13 @@ class Workflow_6:
         
         return pd.DataFrame({'TRAIN': train_metrics, 'TEST': test_metrics}).T
 
+        
     def evaluate_plots(self, 
                        model: Model,  
                        X_test: pd.DataFrame,  
                        y_test: pd.Series,
-                       model_name: str):
+                       model_name: str,
+                       save_dir: str = r"C:\Users\adams\OneDrive\Dokumenty\Python"):
         
         predictions = model.predict(X_test)
         y_pred_proba = model.predict_proba(X_test)[:, 1] if len(model.predict_proba(X_test).shape) > 1 else model.predict_proba(X_test)
@@ -226,6 +261,95 @@ class Workflow_6:
         axes[1].set_ylabel('True labels')
         axes[1].set_title(f'Confusion Matrix {model_name}')
 
-        plt.tight_layout()
-        plt.show()
+        plt.tight_layout()       
+#         plt.show()
         
+        return fig
+       
+    
+    @staticmethod
+    def save_results_to_file(data, 
+                             save_dir: str, 
+                             prefix: str, 
+                             file_type: str = "csv",
+                             github_token: str = None, 
+                             github_repo_url: str = None) -> None:
+        """
+        Save data (results or plots) to a file.
+
+        Parameters:
+        - data: The data to save (pd.DataFrame for CSV or matplotlib figure for plots).
+        - save_dir: Directory to save the file.
+        - prefix: File prefix for naming the output file.
+        - file_type: Type of file to save ("csv" for results, "png" for plots).
+        """
+        os.makedirs(save_dir, exist_ok=True)  # Ensure the directory exists
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        if file_type == "csv":
+            file_name = f"{prefix}_{timestamp}.csv"
+            output_path = os.path.join(save_dir, file_name)
+            print(f"Saving results to: {output_path}")
+            data.to_csv(output_path, index=True)
+        elif file_type == "png":
+            file_name = f"{prefix}_{timestamp}.png"
+            output_path = os.path.join(save_dir, file_name)
+            print(f"Saving plot to: {output_path}")
+            data.savefig(output_path, bbox_inches='tight')
+        else:
+            raise ValueError(f"Unsupported file type: {file_type}")
+         
+        if github_token and github_repo_url:
+            Workflow_6.upload_to_github(output_path, github_repo_url, github_token)
+         
+    
+    @staticmethod
+    def upload_to_github(output_path: str, 
+                         github_repo_url: str, 
+                         github_token: str, 
+                         branch: str = "main",
+                         commit_message: str = "Add file") -> None:
+        """
+        Uploads a file to a GitHub repository.
+
+        Parameters:
+        - output_path (str): Path to the file on the local disk.
+        - github_repo_url (str): URL of the GitHub repository (e.g., 'https://github.com/User/RepoName/tree/main/folder').
+        - github_token (str): GitHub personal access token for authentication.
+        - branch (str): Branch to which the file should be uploaded. Default is 'main'.
+        - commit_message (str): Commit message for the upload. Default is 'Add file'.
+        """
+        # Construct the API URL for the target file
+        url_parts = github_repo_url.rstrip("/").split("/")
+        repo_name = url_parts[4]  # Repository name
+        user = url_parts[3]       # GitHub username
+        folder_path = "/".join(url_parts[6:])  # Folder path inside the repository       
+        file_name = os.path.basename(output_path)
+        api_url = f"https://api.github.com/repos/{user}/{repo_name}/contents/{folder_path}/{file_name}"
+
+        # Read the file content
+        with open(output_path, "rb") as file:
+            content = base64.b64encode(file.read()).decode("utf-8")
+
+        # Prepare the payload for the request
+        payload = {
+            "message": commit_message,
+            "branch": branch,
+            "content": content,
+        }
+
+        # Prepare the headers
+        headers = {"Authorization": f"Bearer {github_token}"}
+
+        # Send the PUT request to GitHub API
+        response = requests.put(api_url, json=payload, headers=headers)
+
+        # Handle response
+        if response.status_code == 201:
+            print(f"File '{output_path}' successfully uploaded to GitHub at '{github_repo_url}'.")
+        elif response.status_code == 404:
+            print(f"Failed to upload file: {response.status_code} - Repository or path not found.")
+        elif response.status_code == 422:
+            print(f"File '{output_path}' already exists in the repository.")
+        else:
+            print(f"Failed to upload file: {response.status_code} - {response.text}")

@@ -30,7 +30,7 @@ setup(
     python_requires=">=3.7",  
     entry_points={
         "console_scripts": [
-            "mushroom=main:main",  
+            "mushroom_14a=main:main",  
         ]
     },
 )
